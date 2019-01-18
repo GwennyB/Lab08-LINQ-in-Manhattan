@@ -7,8 +7,11 @@
         "geometry":
           {
             "type":"Point",
-            "coordinates":
-              [-73.997177,40.750633]
+            "coordinates": 
+              [
+                -73.997177,
+                40.750633
+              ]
           },
         "properties":
           {
