@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Linq;
+using LINQ_in_Manhattan.Classes;
 
 namespace LINQ_in_Manhattan
 {
@@ -11,9 +12,10 @@ namespace LINQ_in_Manhattan
         static void Main(string[] args)
         {
             string path = ("../../../../data.json");
-
-            DedupeNeighborhoods(path);
-            GetNeighborhoodsInOneStep(path);
+            Feature[] all = ReadFile(path);
+            //GetAllNeighborhoods(all);
+            //GetNeighborhoodsInOneQuery(all);
+            GetNeighborhoodsUsingLambda(all);
             Console.ReadLine();
 
         }
@@ -21,115 +23,77 @@ namespace LINQ_in_Manhattan
         /// <summary>
         /// reads in a json file and converts contents to a JObject
         /// </summary>
-        /// <param name="path"> path to source json file </param>
+        /// <param name="data"> 'features' list from json data </param>
         /// <returns> JSON object made from data file contents </returns>
-        static JObject ReadFile(string path)
+        static Feature[] ReadFile(string path)
         {
-            using (StreamReader reader = File.OpenText(path))
-            {
-                JObject o = (JObject)JToken.ReadFrom(new JsonTextReader(reader));
-
-                return o;
-            }
+            string source = File.ReadAllText(path);
+            Manhattan data = JsonConvert.DeserializeObject<Manhattan>(source);
+            return data.features;
         }
 
         /// <summary>
         /// gets a JSON object (from ReadFile), queries it for all neighborhoods, puts them into an array, and prints them to console
+        /// filters results for blank neighborhoods, and re-prints them
+        /// filters filtered results for duplicates, and re-prints them
         /// </summary>
-        /// <param name="path"> path to data file </param>
-        /// <returns> array of neighborhoods </returns>
-        static string[] GetAllNeighborhoods(string path)
+        /// <param name="data"> 'features' list from json data </param>
+        static void GetAllNeighborhoods(Feature[] data)
         {
-            JObject data = ReadFile(path);
-            var results = from feature in data["features"]
-                          select (string)feature["properties"]["neighborhood"];
-            string[] neighborhoods = new string[50];
-            int counter = 0;
+            var results = from feature in data
+                          select feature.properties.neighborhood;
+
             Console.WriteLine("ALL NEIGHBORHOODS - UNFILTERED");
             Console.WriteLine();
             foreach (var item in results)
             {
-                if(counter > neighborhoods.Length-2)
-                {
-                    Array.Resize(ref neighborhoods, neighborhoods.Length +10);
-                }
-                neighborhoods[counter] = item;
-                counter++;
                 Console.WriteLine($"{item}");
-
             }
             Console.WriteLine();
             Console.WriteLine(" ==================================================================== ");
-            Console.WriteLine();
-            return neighborhoods;
-        }
 
-        /// <summary>
-        /// gets array of neighborhoods, queries it for entries that aren't empty, puts them into an array, and prints them to console
-        /// </summary>
-        /// <param name="path"> path to data file </param>
-        /// <returns> array of neighborhoods </returns>
-        static string[] NeighborhoodsNoBlanks(string path)
-        {
-            string[] neighborhoods = GetAllNeighborhoods(path);
-            var results = from item in neighborhoods
-                          where item != ""
-                          select item;
 
-            string[] noBlanks = new string[neighborhoods.Length];
-            int counter = 0;
+            var results2 = from neighborhood in results
+                           where neighborhood != ""
+                           select neighborhood;
+
             Console.WriteLine("ALL NEIGHBORHOODS - FILTERED FOR BLANKS");
             Console.WriteLine();
-            foreach (var item in results)
+            foreach (var item in results2)
             {
-                noBlanks[counter] = item;
-                counter++;
                 Console.WriteLine($"{item}");
-
             }
             Console.WriteLine();
             Console.WriteLine(" ==================================================================== ");
-            Console.WriteLine(); return noBlanks;
-        }
 
-        /// <summary>
-        /// gets array of non-blank neighborhoods, queries it for entries that aren't duplicates, puts them into an array, and prints them to console
-        /// </summary>
-        /// <param name="path"> path to data file </param>
-        /// <returns> array of neighborhoods </returns>
-        static void DedupeNeighborhoods(string path)
-        {
-            string[] neighborhoods = NeighborhoodsNoBlanks(path);
 
-            var results = from item in neighborhoods
-                          group item by item;
+            var results3 = from neighborhood in results2
+                           group neighborhood by neighborhood
+                           into g
+                           select g.Key;
 
-            int counter = 0;
-            string[] noDupes = new string[neighborhoods.Length];
-            Console.WriteLine("ALL NEIGHBORHOODS - FILTERED FOR DUPLICATES");
+            Console.WriteLine("ALL NEIGHBORHOODS - FILTERED FOR BLANKS");
             Console.WriteLine();
-            foreach (var neighborhood in results)
+            foreach (var item in results3)
             {
-                neighborhoods[counter] = neighborhood.Key;
-                counter++;
-                Console.WriteLine($"{neighborhood.Key}");
+                Console.WriteLine($"{item}");
             }
             Console.WriteLine();
             Console.WriteLine(" ==================================================================== ");
-            Console.WriteLine();
+
         }
+
 
         /// <summary>
         /// gets a JSON object (from ReadFile), queries it for all neighborhoods that aren't blanks or dupes, and prints them to console
+        /// uses a single LINQ query to do all filtering
         /// </summary>
-        /// <param name="path"> path to data file </param>
-        static void GetNeighborhoodsInOneStep(string path)
+        /// <param name="data"> 'features' list from json data </param>
+        static void GetNeighborhoodsInOneQuery(Feature[] data)
         {
-            JObject data = ReadFile(path);
-
-            var results = from feature in data["features"]
-                          where (string)feature["properties"]["neighborhood"] != ""
-                          group feature by feature["properties"]["neighborhood"]
+            var results = from feature in data
+                          where feature.properties.neighborhood != ""
+                          group feature by feature.properties.neighborhood
                           into neighborhoods
                           select neighborhoods;
             Console.WriteLine();
@@ -142,12 +106,24 @@ namespace LINQ_in_Manhattan
 
         }
 
-        static void PrintAll(string[] strings)
+        /// <summary>
+        /// gets a JSON object (from ReadFile), queries it for all neighborhoods that aren't blanks or dupes, and prints them to console
+        /// uses a single query built from lambda expressions to do all filtering
+        /// </summary>
+        /// <param name="data"> 'features' list from json data </param>
+        static void GetNeighborhoodsUsingLambda(Feature[] data)
         {
-            foreach (string item in strings)
+            var results = data.Where(nameof => nameof.properties.neighborhood.Length > 0)
+                        .GroupBy(global => global.properties.neighborhood)
+                        .Select(s => s.Key);
+            Console.WriteLine();
+            Console.WriteLine("USING LAMBDA");
+            Console.WriteLine();
+            foreach (var item in results)
             {
                 Console.WriteLine($"{item}");
             }
         }
+
     }
 }
