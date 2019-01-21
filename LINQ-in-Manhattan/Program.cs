@@ -13,8 +13,13 @@ namespace LINQ_in_Manhattan
         {
             string path = ("../../../../data.json");
             Feature[] all = ReadFile(path);
-            //GetAllNeighborhoods(all);
-            //GetNeighborhoodsInOneQuery(all);
+            // use separate filtering queries
+            GetAllNeighborhoods(all);
+            Console.ReadLine();
+            // use single LINQ query
+            GetNeighborhoodsInOneQuery(all);
+            Console.ReadLine();
+            // use single query with lambda expressions
             GetNeighborhoodsUsingLambda(all);
             Console.ReadLine();
 
