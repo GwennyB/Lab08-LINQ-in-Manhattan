@@ -77,7 +77,7 @@ namespace LINQ_in_Manhattan
                            into g
                            select g.Key;
 
-            Console.WriteLine("ALL NEIGHBORHOODS - FILTERED FOR BLANKS");
+            Console.WriteLine("ALL NEIGHBORHOODS - FILTERED FOR DUPLICATES");
             Console.WriteLine();
             foreach (var item in results3)
             {
@@ -102,7 +102,7 @@ namespace LINQ_in_Manhattan
                           into neighborhoods
                           select neighborhoods;
             Console.WriteLine();
-            Console.WriteLine("ALL IN ONE RESULT");
+            Console.WriteLine("ALL IN ONE QUERY USING LINQ");
             Console.WriteLine();
             foreach (var item in results)
             {
@@ -122,7 +122,7 @@ namespace LINQ_in_Manhattan
                         .GroupBy(global => global.properties.neighborhood)
                         .Select(s => s.Key);
             Console.WriteLine();
-            Console.WriteLine("USING LAMBDA");
+            Console.WriteLine("ALL IN ONE QUERY USING LAMBDA EXPRESSIONS");
             Console.WriteLine();
             foreach (var item in results)
             {
